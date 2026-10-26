@@ -19,29 +19,6 @@ def read_graph():
     return n, adj
 
 
-
-def is_correct(adj, answer):
-    # Алгоритм Кана: проверяем, что без answer граф не содержит циклов.
-    n = len(adj)
-    degree = [0] * n
-    for v in range(n):
-        if v not in answer:
-            for u in adj[v]:
-                if u not in answer:
-                    degree[u] += 1
-    stack = [v for v in range(n) if v not in answer and degree[v] == 0]
-    count = 0
-    while stack:
-        v = stack.pop()
-        count += 1
-        for u in adj[v]:
-            if u not in answer:
-                degree[u] -= 1
-                if degree[u] == 0:
-                    stack.append(u)
-    return count == n - len(answer)
-
-
 def greedy(n, adj, deadline):
     out = [set(row) for row in adj]
     inc = [set() for _ in range(n)]
@@ -57,7 +34,7 @@ def greedy(n, adj, deadline):
             v = stack.pop()
             if v not in alive:
                 continue
-            take = v in out[v]  # Вершину с петлёй обязательно удаляем.
+            take = v in out[v]  
             if not take and len(inc[v]) > 1 and len(out[v]) > 1:
                 continue
         else:
@@ -77,8 +54,6 @@ def greedy(n, adj, deadline):
         if take:
             answer.add(v)
         else:
-            # Обходим вершину: вместо u -> v -> w проводим u -> w.
-            # Здесь хотя бы один из списков before, after имеет длину <= 1.
             for u in before:
                 for w in after:
                     out[u].add(w)
@@ -86,21 +61,8 @@ def greedy(n, adj, deadline):
         stack.extend(before)
         stack.extend(after)
 
-    # Запасной корректный ответ при остановке по времени или сигналу.
     answer.update(alive)
     return answer
-
-
-def improve(adj, answer, deadline):
-    # Пробуем вернуть каждую удалённую вершину в исходный граф.
-    for v in sorted(answer):
-        if stop or time.monotonic() >= deadline:
-            break
-        answer.remove(v)
-        if not is_correct(adj, answer):
-            answer.add(v)
-    return answer
-
 
 def main():
     start = time.monotonic()
@@ -109,16 +71,13 @@ def main():
     deadline = time.monotonic() + limit
     n, adj = read_graph()
     answer = greedy(n, adj, deadline)
-    if is_correct(adj, answer):
-        answer = improve(adj, answer, deadline)
-    else:
-        answer = set(range(n))
+
     sys.stdout.write(''.join(str(v + 1) + '\n' for v in sorted(answer)))
     sys.stdout.flush()
 
     elapsed = time.monotonic() - start
-    print(f"Время работы: {elapsed:.3f} с", file=sys.stderr)
-    print(f"Количество удалённых вершин: {len(answer)}", file=sys.stderr)
+    # print(f"Время работы: {elapsed:.3f} с", file=sys.stderr)
+    # print(f"Количество удалённых вершин: {len(answer)}", file=sys.stderr)
 
 if __name__ == '__main__':
     main()
