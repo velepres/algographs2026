@@ -65,7 +65,6 @@ def greedy(n, adj, deadline):
     return answer
 
 def is_correct(adj, answer):
-    # Алгоритм Кана: проверяем граф без вершин из answer.
     n = len(adj)
     degree = [0] * n
     for v in range(n):
@@ -88,7 +87,6 @@ def is_correct(adj, answer):
 
 
 def improve(adj, answer, deadline):
-    # Один проход: каждую выбранную вершину пробуем вернуть один раз.
     for v in sorted(answer):
         if stop or time.monotonic() >= deadline:
             break
@@ -101,7 +99,7 @@ def improve(adj, answer, deadline):
 def main():
     start = time.monotonic()
     signal.signal(signal.SIGTERM, on_sigterm)
-    limit = 60
+    limit = 500
     deadline = time.monotonic() + limit
     n, adj = read_graph()
     answer = greedy(n, adj, deadline)
