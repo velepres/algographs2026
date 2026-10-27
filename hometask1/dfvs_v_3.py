@@ -13,77 +13,128 @@ def on_sigterm(signum, frame):
 def read_graph():
     lines = sys.stdin.buffer.read().split(b'\n')
     n = int(lines[0].split()[0])
-    adj = []
+    G = []
     for line in lines[1:n + 1]:
-        adj.append([int(x) - 1 for x in line.split()])
-    return n, adj
+        G.append([int(x) - 1 for x in line.split()])
+    return n, G
 
 
-def greedy(n, adj, deadline):
-    out = [set(row) for row in adj]
-    inc = [set() for _ in range(n)]
+def whal_v(n, G, deadline):
+
+    out_e = []
+    for neibhr in G:
+        out_e.append(set(neibhr))
+    in_e = [set() for _ in range(n)]
+    
     for v in range(n):
-        for u in out[v]:
-            inc[u].add(v)
-    alive = set(range(n))
-    answer = set()
-    stack = list(range(n))
+        for u in out_e[v]:
+            in_e[u].add(v)
 
-    while alive and not stop and time.monotonic() < deadline:
-        if stack:
-            v = stack.pop()
-            if v not in alive:
+    cur_G = set(range(n))
+    answer = set()
+    pot_v = list(range(n))
+
+    while len(cur_G) > 0 and not stop and time.monotonic() < deadline:
+       
+        if len(pot_v) > 0:
+            v = pot_v.pop()
+
+            if v not in cur_G:
                 continue
-            take = v in out[v]  
-            if not take and len(inc[v]) > 1 and len(out[v]) > 1:
+            take = False
+
+            if v in out_e[v]:
+                take = True
+
+            if take == False:
+                incoming_count = len(in_e[v])
+                outgoing_count = len(out_e[v])
+
+            if incoming_count > 1 and outgoing_count > 1:
                 continue
         else:
-            v = max(alive, key=lambda u: len(inc[u]) * len(out[u]))
+
+            best_score = -1
+
+            for u in cur_G:
+                incoming_count = len(in_e[u])
+                outgoing_count = len(out_e[u])
+                score = incoming_count * outgoing_count
+
+                if score > best_score:
+                    best_score = score
+                    v = u
             take = True
 
-        before = list(inc[v])
-        after = list(out[v])
-        alive.remove(v)
+        before = list(in_e[v])
+        after = list(out_e[v])
+        cur_G.remove(v)
+
         for u in before:
-            out[u].discard(v)
+            out_e[u].discard(v)
+
         for u in after:
-            inc[u].discard(v)
-        out[v] = set()
-        inc[v] = set()
+            in_e[u].discard(v)
+        out_e[v] = set()
+        in_e[v] = set()
 
         if take:
             answer.add(v)
         else:
             for u in before:
                 for w in after:
-                    out[u].add(w)
-                    inc[w].add(u)
-        stack.extend(before)
-        stack.extend(after)
+                    out_e[u].add(w)
+                    in_e[w].add(u)
+        pot_v.extend(before)
+        pot_v.extend(after)
 
-    answer.update(alive)
+    answer.update(cur_G)
     return answer
 
-def is_correct(adj, answer):
-    n = len(adj)
-    degree = [0] * n
-    for v in range(n):
-        if v not in answer:
-            for u in adj[v]:
-                if u not in answer:
-                    degree[u] += 1
+def khan(G, answer):
+    n = len(G)
 
-    stack = [v for v in range(n) if v not in answer and degree[v] == 0]
-    count = 0
-    while stack:
-        v = stack.pop()
-        count += 1
-        for u in adj[v]:
-            if u not in answer:
-                degree[u] -= 1
-                if degree[u] == 0:
-                    stack.append(u)
-    return count == n - len(answer)
+    incoming_count = [0] * n
+
+    for v in range(n):
+        if v in answer:
+            continue
+
+        for u in G[v]:
+            if u in answer:
+                incoming_count[u] += 1
+    ready = []
+
+    for v in range(n):
+        if v in answer:
+            continue
+
+        if incoming_count[v] == 0:
+            ready.append(v)
+
+    processed = 0
+
+    while len(ready) > 0:
+        v = ready.pop()
+        processed += 1
+
+        for u in G[v]:
+            if u in answer:
+                continue
+
+            incoming_count[u] -= 1
+            
+            if incoming_count[u] == 0:
+                ready.append(u)
+
+        remaining = n - len(answer)
+
+        if processed == remaining:
+            return True
+        else:
+            return False
+
+
 
 
 def improve(adj, answer, deadline):
@@ -91,7 +142,7 @@ def improve(adj, answer, deadline):
         if stop or time.monotonic() >= deadline:
             break
         answer.remove(v)
-        if not is_correct(adj, answer):
+        if not khan(adj, answer):
             answer.add(v)
     return answer
 
@@ -102,15 +153,15 @@ def main():
     limit = 500
     deadline = time.monotonic() + limit
     n, adj = read_graph()
-    answer = greedy(n, adj, deadline)
+    answer = whal_v(n, adj, deadline)
     answer = improve(adj, answer, deadline)
 
     sys.stdout.write(''.join(str(v + 1) + '\n' for v in sorted(answer)))
     sys.stdout.flush()
 
     elapsed = time.monotonic() - start
-    print(f"Время работы: {elapsed:.3f} с", file=sys.stderr)
-    print(f"Количество удалённых вершин: {len(answer)}", file=sys.stderr)
+    # print(f"Время работы: {elapsed:.3f} с", file=sys.stderr)
+    # print(f"Количество удалённых вершин: {len(answer)}", file=sys.stderr)
 
 if __name__ == '__main__':
     main()
