@@ -20,12 +20,9 @@ def read_graph():
 
 
 def whal_v(n, G, deadline):
-
-    out_e = []
-    for neibhr in G:
-        out_e.append(set(neibhr))
+    out_e = [set(neighbors) for neighbors in G]
     in_e = [set() for _ in range(n)]
-    
+
     for v in range(n):
         for u in out_e[v]:
             in_e[u].add(v)
@@ -34,26 +31,22 @@ def whal_v(n, G, deadline):
     answer = set()
     pot_v = list(range(n))
 
-    while len(cur_G) > 0 and not stop and time.monotonic() < deadline:
-       
-        if len(pot_v) > 0:
+    while cur_G and not stop and time.monotonic() < deadline:
+        if pot_v:
             v = pot_v.pop()
 
             if v not in cur_G:
                 continue
-            take = False
 
-            if v in out_e[v]:
-                take = True
+            take = v in out_e[v]
 
-            if take == False:
+            if not take:
                 incoming_count = len(in_e[v])
                 outgoing_count = len(out_e[v])
 
-            if incoming_count > 1 and outgoing_count > 1:
-                continue
+                if incoming_count > 1 and outgoing_count > 1:
+                    continue
         else:
-
             best_score = -1
 
             for u in cur_G:
@@ -64,6 +57,7 @@ def whal_v(n, G, deadline):
                 if score > best_score:
                     best_score = score
                     v = u
+
             take = True
 
         before = list(in_e[v])
@@ -75,6 +69,7 @@ def whal_v(n, G, deadline):
 
         for u in after:
             in_e[u].discard(v)
+
         out_e[v] = set()
         in_e[v] = set()
 
@@ -85,11 +80,13 @@ def whal_v(n, G, deadline):
                 for w in after:
                     out_e[u].add(w)
                     in_e[w].add(u)
+
         pot_v.extend(before)
         pot_v.extend(after)
 
     answer.update(cur_G)
     return answer
+
 
 def khan(G, answer):
     n = len(G)
@@ -101,7 +98,7 @@ def khan(G, answer):
             continue
 
         for u in G[v]:
-            if u in answer:
+            if u not in answer:
                 incoming_count[u] += 1
     ready = []
 
@@ -127,12 +124,12 @@ def khan(G, answer):
             if incoming_count[u] == 0:
                 ready.append(u)
 
-        remaining = n - len(answer)
+    remaining = n - len(answer)
 
-        if processed == remaining:
-            return True
-        else:
-            return False
+    if processed == remaining:
+        return True
+    else:
+        return False
 
 
 
