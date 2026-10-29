@@ -20,7 +20,11 @@ def read_graph():
 
 
 def whal_v(n, G, deadline):
-    out_e = [set(neighbors) for neighbors in G]
+   
+    out_e = []
+    for ng in G:
+        out_e.append(set(ng))
+
     in_e = [set() for _ in range(n)]
 
     for v in range(n):
@@ -134,12 +138,12 @@ def khan(G, answer):
 
 
 
-def improve(adj, answer, deadline):
+def improve(G, answer, deadline):
     for v in sorted(answer):
         if stop or time.monotonic() >= deadline:
             break
         answer.remove(v)
-        if not khan(adj, answer):
+        if not khan(G, answer):
             answer.add(v)
     return answer
 
@@ -147,11 +151,11 @@ def improve(adj, answer, deadline):
 def main():
     start = time.monotonic()
     signal.signal(signal.SIGTERM, on_sigterm)
-    limit = 500
+    limit = 590
     deadline = time.monotonic() + limit
-    n, adj = read_graph()
-    answer = whal_v(n, adj, deadline)
-    answer = improve(adj, answer, deadline)
+    n, G = read_graph()
+    answer = whal_v(n, G, deadline)
+    answer = improve(G, answer, deadline)
 
     sys.stdout.write(''.join(str(v + 1) + '\n' for v in sorted(answer)))
     sys.stdout.flush()
