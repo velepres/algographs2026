@@ -42,9 +42,9 @@ def whal_v(n, G, deadline):
             if v not in cur_G:
                 continue
 
-            take = v in out_e[v]
+            take_in_ans = v in out_e[v]
 
-            if not take:
+            if not take_in_ans:
                 incoming_count = len(in_e[v])
                 outgoing_count = len(out_e[v])
 
@@ -62,7 +62,7 @@ def whal_v(n, G, deadline):
                     best_score = score
                     v = u
 
-            take = True
+            take_in_ans = True
 
         before = list(in_e[v])
         after = list(out_e[v])
@@ -77,7 +77,7 @@ def whal_v(n, G, deadline):
         out_e[v] = set()
         in_e[v] = set()
 
-        if take:
+        if take_in_ans:
             answer.add(v)
         else:
             for u in before:
@@ -95,7 +95,7 @@ def whal_v(n, G, deadline):
 def khan(G, answer):
     n = len(G)
 
-    incoming_count = [0] * n
+    in_count = [0] * n
 
     for v in range(n):
         if v in answer:
@@ -103,34 +103,34 @@ def khan(G, answer):
 
         for u in G[v]:
             if u not in answer:
-                incoming_count[u] += 1
-    ready = []
+                in_count[u] += 1
+    in_deg0 = []
 
     for v in range(n):
         if v in answer:
             continue
 
-        if incoming_count[v] == 0:
-            ready.append(v)
+        if in_count[v] == 0:
+            in_deg0.append(v)
 
-    processed = 0
+    pro_count = 0
 
-    while len(ready) > 0:
-        v = ready.pop()
-        processed += 1
+    while len(in_deg0) > 0:
+        v = in_deg0.pop()
+        pro_count += 1
 
         for u in G[v]:
             if u in answer:
                 continue
 
-            incoming_count[u] -= 1
+            in_count[u] -= 1
             
-            if incoming_count[u] == 0:
-                ready.append(u)
+            if in_count[u] == 0:
+                in_deg0.append(u)
 
-    remaining = n - len(answer)
+    rest = n - len(answer)
 
-    if processed == remaining:
+    if pro_count == rest:
         return True
     else:
         return False
@@ -161,8 +161,8 @@ def main():
     sys.stdout.flush()
 
     elapsed = time.monotonic() - start
-    # print(f"Время работы: {elapsed:.3f} с", file=sys.stderr)
-    # print(f"Количество удалённых вершин: {len(answer)}", file=sys.stderr)
+    #print(f"Время работы: {elapsed:.3f} с", file=sys.stderr)
+    #print(f"Количество удалённых вершин: {len(answer)}", file=sys.stderr)
 
 if __name__ == '__main__':
     main()
